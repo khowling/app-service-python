@@ -3,8 +3,14 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- master
+trigger: none # add this trigger value to none 
+resources:
+  pipelines:
+  - pipeline: app-service-python-release 
+    source: khowling.app-service-python-build
+    trigger:
+      branches:
+        - master 
 
 pool:
   vmImage: ubuntu-latest
