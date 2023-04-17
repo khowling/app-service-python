@@ -20,8 +20,8 @@ steps:
     resourceGroupName: 'kh-appservice'
     location: 'West Europe'
     templateLocation: 'Linked artifact'
-    csmFile: 'infra/main.bicep'
-    overrideParameters: 'name=as-python01'
+    csmFile: './infra/main.bicep'
+    overrideParameters: '-name as-python01'
     deploymentMode: 'Incremental'
     
 - task: DownloadBuildArtifacts@1
