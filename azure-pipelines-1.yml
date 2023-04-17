@@ -12,6 +12,7 @@ pool:
 steps:
 
 - task: AzureResourceManagerTemplateDeployment@3
+  enabled: false
   inputs:
     deploymentScope: 'Resource Group'
     azureResourceManagerConnection: 'Visual Studio Enterprise Subscription(18da4f51-8db5-479b-ba54-e2e4bfba78f0)'
@@ -33,6 +34,15 @@ steps:
     buildVersionToDownload: 'latest'
     downloadType: 'single'
     downloadPath: '$(System.ArtifactsDirectory)'
+
+- task: AzureRmWebAppDeployment@4
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'Visual Studio Enterprise Subscription(18da4f51-8db5-479b-ba54-e2e4bfba78f0)'
+    appType: 'webAppLinux'
+    WebAppName: 'as-python01'
+    packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
+    RuntimeStack: 'PYTHON|3.9'
 
 
 
