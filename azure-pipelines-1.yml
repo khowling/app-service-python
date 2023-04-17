@@ -41,7 +41,7 @@ steps:
     azureSubscription: 'Visual Studio Enterprise Subscription(18da4f51-8db5-479b-ba54-e2e4bfba78f0)'
     appType: 'webAppLinux'
     WebAppName: 'as-python01'
-    packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
+    packageForLinux: '$(System.ArtifactsDirectory)/release/release.zip'
     RuntimeStack: 'PYTHON|3.9'
 
 
