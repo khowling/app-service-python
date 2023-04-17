@@ -18,4 +18,13 @@ steps:
     source antenv/bin/activate
     python3 -m pip install -r requirements.txt
 
-  displayName: 'Run a multi-line script'
+  displayName: 'Build Python Environment'
+
+- script: zip -r $(Build.ArtifactStagingDirectory)/release.zip app.py antenv/
+  displayName: 'Run a one-line script'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'release'
+    publishLocation: 'Container'
