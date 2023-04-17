@@ -14,5 +14,8 @@ steps:
   displayName: 'Run a one-line script'
 
 - script: |
-    ls
+    python3 -m venv antenv
+    source antenv/bin/activate
+    python3 -m pip install -r requirements.txt
+
   displayName: 'Run a multi-line script'
