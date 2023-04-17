@@ -1,8 +1,8 @@
 
 
-# Clone and Run locally
+## Clone and Run locally
 
-##  Create Virtual env
+###  Create Virtual env
 
  > !NOTE
  > Needs to be named **`antenv`** for app service to locate it!
@@ -16,15 +16,15 @@ $ source antenv/bin/activate
  > `$ deactivate`
 
 
-$ python -m pip install --upgrade pip
 
-## Install some test packages in the virtual env
+### Install some test packages in the virtual env
 
 ```
+$ python3 -m pip install --upgrade pip
 $ python3 -m pip install -r requirements.txt
 ```
 
-##  Create a demo app.py
+###  Create a demo app.py
 
 ```
 echo "import openai;
@@ -46,16 +46,20 @@ def hello():
 flask run
 ```
 
-#  Deploy to Azure
+#  Deploy to Azure 
 
-## Create Infra
-az group create --name my-python-demo
-az deployment group create -g my-python-demo --template-file ./infra/main.bicep --parameters name=mypyapp01
+## via Azure DevOps
 
-# Add app.py and the virtual environment to the zip file
+### Pipelines included
+
+* `azure-pipelines.yml` - application build pipeline
+* `azure-pipelines-1.yml` - infra creation and app deployment
+
+## via CLI
+
+### Add app.py and the virtual environment to the zip file
 zip -r ./release.zip app.py  antenv/
 
-# Release to App Service
+### Release to App Service
 az webapp deploy -g rg -n appname --src-path ./release.zip
 
-# Look for the Log stream of app service 
