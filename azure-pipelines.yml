@@ -10,20 +10,21 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
 
-- script: |
+- displayName: 'Build Python Environment'
+  script: |
     python3 -m venv antenv
     source antenv/bin/activate
     python3 -m pip install -r requirements.txt
 
-  displayName: 'Build Python Environment'
+  
 
-- script: zip -r $(Build.ArtifactStagingDirectory)/release.zip app.py antenv/
-  displayName: 'Run a one-line script'
+- displayName: 'Zip Environment'
+  script: zip -r $(Build.ArtifactStagingDirectory)/release.zip app.py antenv/
+  
 
-- task: PublishBuildArtifacts@1
+- displayName: 'Upload Zip'
+  task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'release'

@@ -1,7 +1,7 @@
 
 
 param name string
-var location = resourceGroup().location
+param location string = resourceGroup().location
 
 // ------------------------------------ App Service Plan & WebApp --------------
 
@@ -29,7 +29,7 @@ resource site 'Microsoft.Web/sites@2020-10-01' = {
     clientAffinityEnabled: false
     siteConfig: {
       alwaysOn: true
-      linuxFxVersion: 'PYTHON|3.9'
+      linuxFxVersion: 'PYTHON|3.10'
     }
   }
 }

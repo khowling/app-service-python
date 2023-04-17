@@ -48,7 +48,7 @@ steps:
     appType: 'webAppLinux'
     WebAppName: 'as-python01'
     packageForLinux: '$(System.ArtifactsDirectory)/release/release.zip'
-    RuntimeStack: 'PYTHON|3.9'
+    RuntimeStack: 'PYTHON|3.10'
 
 
 
