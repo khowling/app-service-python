@@ -4,7 +4,7 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 from flask import Flask
 
 
-default_credential = DefaultAzureCredential()
+default_credential = DefaultAzureCredential(exclude_shared_token_cache_credential=True)
 
 blob_service_client = BlobServiceClient(os.environ.get('BLOB_ACCOUNT_URL'), credential=default_credential)
 container_client = blob_service_client.get_container_client(container= os.environ.get('BLOB_CONTAINER_NAME'))
