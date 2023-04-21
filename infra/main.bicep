@@ -191,6 +191,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   properties: {
     accessTier: 'Hot'
     allowBlobPublicAccess: false
+    publicNetworkAccess: 'Disabled'
   }
 
   resource blobServices 'blobServices' = {
