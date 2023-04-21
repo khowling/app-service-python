@@ -4,7 +4,7 @@ param clientId string = '9d41b0a7-839f-49ba-8350-8b0271fad878'
 param location string = resourceGroup().location
 
 
-@description('The name of the App Service plan to use.')
+@description('Allow Public Network Access to the App Serivce WebApp.')
 param allowPublicNetworkAccess bool = true
 
 
