@@ -17,7 +17,7 @@ app = Flask(__name__)
 def hello():
     blobstr = 'Blobs : '
     blob_list = container_client.list_blobs()
-    for blob in blobs_list:
+    for blob in blob_list:
        blobstr = blobstr + ', ' + blob.name
 
     return 'Hello, World, blob list: %s' %blobstr 
