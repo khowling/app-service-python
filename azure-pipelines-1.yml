@@ -18,7 +18,7 @@ pool:
 steps:
 
 - task: AzureResourceManagerTemplateDeployment@3
-  enabled: false
+  enabled: true
   inputs:
     deploymentScope: 'Resource Group'
     azureResourceManagerConnection: 'Visual Studio Enterprise Subscription(18da4f51-8db5-479b-ba54-e2e4bfba78f0)'

@@ -3,6 +3,11 @@ param tenentId string = '828514f2-d386-436c-8148-4bea696025bd'
 param clientId string = '9d41b0a7-839f-49ba-8350-8b0271fad878'
 param location string = resourceGroup().location
 
+
+@description('The name of the App Service plan to use.')
+param allowPublicNetworkAccess bool = true
+
+
 // ------------------------- Private Networking -------------------------  
 resource virtualNetwork  'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: 'vnet-${name}'
@@ -236,7 +241,7 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     virtualNetworkSubnetId: virtualNetwork::backendIntegrationSubnet.id // Specify a virtual network subnet resource ID to enable regional virtual network integration.
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: allowPublicNetworkAccess ? 'Enabled' : 'Disabled'
     siteConfig: {
       alwaysOn: true
       linuxFxVersion: 'PYTHON|3.10'
@@ -246,6 +251,7 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
   resource appsettings 'config' = {
     name: 'appsettings'
     properties: {
+      AZURE_CLIENT_ID: appIdentity.properties.clientId
       BLOB_ACCOUNT_URL: storageAccount.properties.primaryEndpoints.blob
       BLOB_CONTAINER_NAME: storageAccount::blobServices::container.name
     }
