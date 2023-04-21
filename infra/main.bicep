@@ -1,31 +1,35 @@
 param name string
+param tenentId string = '828514f2-d386-436c-8148-4bea696025bd'
+param clientId string = '9d41b0a7-839f-49ba-8350-8b0271fad878'
 param location string = resourceGroup().location
 
-// ------------------------------------ Private Networking
-var vnetAddressPrefix = '10.0.0.0/16'
-var backendAddressPrefix = '10.0.0.0/24'
-var frontendAddressPrefix = '10.0.1.0/24'
-
+// ------------------------- Private Networking -------------------------  
 resource virtualNetwork  'Microsoft.Network/virtualNetworks@2022-05-01' = {
   name: 'vnet-${name}'
   location: location
   properties: {
     addressSpace: {
       addressPrefixes: [
-        vnetAddressPrefix
+        '10.0.0.0/16'
       ]
     }
     subnets: [
       {
         name: 'frontend'
         properties: {
-          addressPrefix: frontendAddressPrefix
+          addressPrefix: '10.0.1.0/24'
+        }
+      }
+      {
+        name: 'dependencies'
+        properties: {
+          addressPrefix: '10.0.2.0/24'
         }
       }
       {
         name: 'backend'
         properties: {
-          addressPrefix: backendAddressPrefix
+          addressPrefix: '10.0.0.0/24'
           delegations: [
             {
               name: 'delegation'
@@ -44,10 +48,15 @@ resource virtualNetwork  'Microsoft.Network/virtualNetworks@2022-05-01' = {
   resource frontendIntegrationSubnet 'subnets' existing = {
     name: 'frontend'
   }
+  resource dependenciesIntegrationSubnet 'subnets' existing = {
+    name: 'dependencies'
+  }
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
-  name: 'vnet-frontend-${name}'
+// ------------------ App Service Frontend Private endpoint --------------------
+
+resource appServiceFrontend 'Microsoft.Network/privateEndpoints@2021-05-01' = {
+  name: 'appservice-frontend-${name}'
   location: location
   properties: {
     subnet: {
@@ -55,7 +64,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
     }
     privateLinkServiceConnections: [
       {
-        name: 'appservice-private-link-connection'
+        name: 'private-link-connection'
         properties: {
           privateLinkServiceId: site.id
           groupIds: [
@@ -67,13 +76,13 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   }
 
   resource privateDNSZoneGroup 'privateDnsZoneGroups' = {
-    name: 'default'
+    name: 'sites-PrivateDnsZoneGroup'
     properties: {
       privateDnsZoneConfigs: [
         {
           name: 'privatelink-database-windows-net'
           properties: {
-            privateDnsZoneId: privateDnsZone.id
+            privateDnsZoneId: appServiceFrontendDnsZone.id
           }
         }
       ]
@@ -81,13 +90,13 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   }
 }
 
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+resource appServiceFrontendDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'privatelink.azurewebsites.net'
   location: 'global'
   properties: {}
 
   resource privateDnsZoneLink 'virtualNetworkLinks' = {
-    name: 'privatelink.azurewebsites.net-link'
+    name: 'azurewebsites-link'
     location: 'global'
     properties: {
       registrationEnabled: false
@@ -97,6 +106,105 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
     }
   }
 }
+
+// ------------------ Storage Private endpoint --------------------
+
+resource storagePrivateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
+  name: 'blob-${name}'
+  location: location
+  properties: {
+    subnet: {
+      id: virtualNetwork::dependenciesIntegrationSubnet.id
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'private-link-connection'
+        properties: {
+          privateLinkServiceId: storageAccount.id
+          groupIds: [
+            'blob'
+          ]
+        }
+      }
+    ]
+  }
+
+  resource privateDNSZoneGroup 'privateDnsZoneGroups' = {
+    name: 'blob-PrivateDnsZoneGroup'
+    properties: {
+      privateDnsZoneConfigs: [
+        {
+          name: 'privatelink-database-windows-net'
+          properties: {
+            privateDnsZoneId: storageDnsZone.id
+          }
+        }
+      ]
+    }
+  }
+}
+
+resource storageDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'privatelink.blob.${environment().suffixes.storage}'
+  location: 'global'
+  properties: {}
+
+  resource privateDnsZoneLink 'virtualNetworkLinks' = {
+    name: 'storage-link'
+    location: 'global'
+    properties: {
+      registrationEnabled: false
+      virtualNetwork: {
+        id: virtualNetwork.id
+      }
+    }
+  }
+}
+
+// ------------------------------------ App Service Managed Identity ---------
+resource appIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: 'appidentity-${name}'
+  location: location
+}
+
+var BLOB_DATA_CONTRIBUTOR = resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+resource blobroleassign 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount::blobServices::container
+  name: guid(storageAccount.id, appIdentity.name , BLOB_DATA_CONTRIBUTOR)
+  properties: {
+    roleDefinitionId: BLOB_DATA_CONTRIBUTOR
+    principalType: 'ServicePrincipal'
+    principalId: appIdentity.properties.principalId
+  }
+}
+
+
+// ------------------------------------- Storage Account ----------------------
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+  name: 'store${uniqueString(name)}'
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    accessTier: 'Hot'
+    allowBlobPublicAccess: false
+  }
+
+  resource blobServices 'blobServices' = {
+    name: 'default'
+
+    resource container 'containers' = {
+      name: 'pythonfiles'
+      properties: {
+        publicAccess: 'None'
+      }
+    }
+  }
+}
+
 
 
 // ------------------------------------ App Service Plan & WebApp --------------
@@ -117,8 +225,12 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
 resource site 'Microsoft.Web/sites@2022-03-01' = {
   name: name
   location: location
+
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${appIdentity.id}': {}
+    }
   }
   properties: {
     serverFarmId: appServicePlan.id
@@ -130,6 +242,14 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
     }
   }
 
+  resource appsettings 'config' = {
+    name: 'appsettings'
+    properties: {
+      BLOB_ACCOUNT_URL: storageAccount.properties.primaryEndpoints.blob
+      BLOB_CONTAINER_NAME: storageAccount::blobServices::container.name
+    }
+
+  }
   resource authv2 'config' = {
     name: 'authsettingsV2'
 
@@ -138,8 +258,8 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
         azureActiveDirectory: {
           enabled: true
           registration: {
-            openIdIssuer: 'https://login.microsoftonline.com/828514f2-d386-436c-8148-4bea696025bd/v2.0'
-            clientId: '9d41b0a7-839f-49ba-8350-8b0271fad878'
+            openIdIssuer: '${environment().authentication.loginEndpoint}${tenentId}/v2.0'
+            clientId: clientId
             clientSecretSettingName: 'MICROSOFT_PROVIDER_AUTHENTICATION_SECRET'
           }
           login: {
