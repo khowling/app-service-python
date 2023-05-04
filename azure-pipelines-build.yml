@@ -14,9 +14,12 @@ steps:
 - script: |
     python3 -m venv antenv
     source antenv/bin/activate
-    python3 -m pip install -r requirements.txt
+    python -m pip install -r requirements.txt
   displayName: 'Build Python Environment'
   
+- script: |
+    python tests/test_imports.py
+  displayName: 'Run Unit Test'
 
 - script: zip -r $(Build.ArtifactStagingDirectory)/release.zip app.py antenv/
   displayName: 'Zip Environment'

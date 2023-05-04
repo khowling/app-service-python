@@ -20,8 +20,7 @@ $ source antenv/bin/activate
 ### Install some test packages in the virtual env
 
 ```
-$ python3 -m pip install --upgrade pip
-$ python3 -m pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ###  Create a demo app.py
@@ -52,8 +51,8 @@ flask run
 
 ### Pipelines included
 
-* `azure-pipelines.yml` - application build pipeline
-* `azure-pipelines-1.yml` - infra creation and app deployment
+* `azure-pipelines-build.yml` - application build pipeline
+* `azure-pipelines-release.yml` - infra creation and app deployment
 
 ## via CLI
 
