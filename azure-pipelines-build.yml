@@ -18,6 +18,7 @@ steps:
   displayName: 'Build Python Environment'
   
 - script: |
+    source antenv/bin/activate
     python tests/test_imports.py
   displayName: 'Run Unit Test'
 
